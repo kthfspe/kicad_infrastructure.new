@@ -1,0 +1,29 @@
+on:
+  workflow_call:   # 👈 makes it reusable
+jobs:
+  check_schematic_values:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Checkout kicad infrastructure repository
+        uses: actions/checkout@v3
+        with:
+          repository: kthfspe/kicad-infrastructure.new
+
+      - name: Run schematic value checks for each schematic file
+        run: |
+          for file in $(find . -name "*.kicad_sch"); do
+            echo "Checking schematic file: $file"
+            python3 kicad-infrastructure.new/scripts/check_schematic_values.py -s "$file" -c v
+          done
+
+      - name: Schematic value check completed
+        run: echo "Schematic value checks completed."
+

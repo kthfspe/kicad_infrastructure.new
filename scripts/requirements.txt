@@ -1,0 +1,2 @@
+kicad-skip==0.2.5
+sexpdata==1.0.2
