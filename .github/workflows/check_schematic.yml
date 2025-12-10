@@ -21,6 +21,7 @@ jobs:
 
       - name: Run schematic value checks for each schematic file
         run: |
+          cd kicad
           for file in $(find . -name "*.kicad_sch"); do
             echo "Checking schematic file: $file"
             python3 kicad_infrastructure/scripts/check_schematic_values.py -s "$file" -c v
