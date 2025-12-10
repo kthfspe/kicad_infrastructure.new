@@ -15,15 +15,14 @@ jobs:
       - name: Checkout kicad infrastructure repository
         uses: actions/checkout@v6
         with:
-          repository: kthfspe/kicad-infrastructure.new
-          path: kicad-infrastructure
-          ref: main
+          repository: kthfspe/kicad_infrastructure.new
+          path: kicad_infrastructure
 
       - name: Run schematic value checks for each schematic file
         run: |
           for file in $(find . -name "*.kicad_sch"); do
             echo "Checking schematic file: $file"
-            python3 kicad-infrastructure/scripts/check_schematic_values.py -s "$file" -c v
+            python3 kicad_infrastructure/scripts/check_schematic_values.py -s "$file" -c v
           done
 
       - name: Schematic value check completed
