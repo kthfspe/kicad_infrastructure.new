@@ -17,6 +17,7 @@ jobs:
         with:
           repository: kthfspe/kicad-infrastructure.new
           path: kicad-infrastructure
+          ref: main
 
       - name: Run schematic value checks for each schematic file
         run: |
