@@ -1,0 +1,28 @@
+on:
+  workflow_call:   # 👈 makes it reusable
+jobs:
+  check_folder_structure:
+    name: Check folder structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Verify top-level folder for kicad
+        run: |
+          # top folder must contain kicad folder
+          if [ ! -d "kicad" ]; then
+            echo "Error: 'kicad' folder not found in the top-level directory."
+            exit 1
+          fi
+      - name: Top folder can only have kicad, README.md, .github, .gitignore, ltspice and misc folders/files
+        run: |
+          ALLOWED_ITEMS=("kicad" "README.md" ".github" ".gitignore" "ltspice" "misc")
+          for item in *; do
+            if [[ ! " ${ALLOWED_ITEMS[@]} " =~ " ${item} " ]]; then
+              echo "Error: Unexpected item found in top-level directory: $item"
+              exit 1
+            fi
+          done
+
+
