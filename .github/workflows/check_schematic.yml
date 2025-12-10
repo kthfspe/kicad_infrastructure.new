@@ -2,6 +2,7 @@ on:
   workflow_call:   # 👈 makes it reusable
 jobs:
   check_schematic_values:
+    name: Check schematic values
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
