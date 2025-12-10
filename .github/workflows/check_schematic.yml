@@ -18,6 +18,11 @@ jobs:
         with:
           repository: kthfspe/kicad_infrastructure.new
           path: kicad_infrastructure
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          ./venv/bin/activate
+          pip install -r kicad_infrastructure/scripts/requirements.txt
 
       - name: Run schematic value checks for each schematic file
         run: |
