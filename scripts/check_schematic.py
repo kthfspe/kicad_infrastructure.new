@@ -75,12 +75,12 @@ def check_standard_parts(sch: Schematic, excel_path: str):
                     pn_col = col
                     break
             if pn_col is None:
-                print(f"Could not find part number column in sheet {sheet_name}")
+                # print(f"Could not find part number column in sheet {sheet_name}")
                 continue
             part_number = row[pn_col]
             standard_parts.append(part_number)
     print(f"Loaded {len(standard_parts)} standard parts from excel file.")
-    pprint(standard_parts)
+    # pprint(standard_parts)
     for s in sch.symbol:
         if re.match(pn_references_excluded, s.Reference.value):
             continue
@@ -94,6 +94,7 @@ def check_standard_parts(sch: Schematic, excel_path: str):
         if pn not in standard_parts:
             print(f"Component {s.Reference.value} has non-standard Part Number: {pn}")
             error_count += 1
+    return error_count
 
 def main() -> int:
     error_count = 0
