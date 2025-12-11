@@ -6,6 +6,7 @@ import re
 
 power_flags_pattern = re.compile(r'#(?:PWR|FLG)\d+')
 value_pattern = re.compile(r'[\d\.]+(?:p|n|u|m|k|Meg)?(?:\s*)$')
+pn_references_excluded = re.compile(r'(?:R\d+|C\d+|L\d+|JP\d+|SW\d+|H\d+)[a-z]?')
 
 def check_values(sch: Schematic):
     error_count = 0
@@ -28,6 +29,8 @@ def check_values(sch: Schematic):
 def check_part_number(sch: Schematic):
     error_count = 0
     for s in sch.symbol:
+        if re.match(pn_references_excluded, s.Reference.value):
+            continue
         if s.Value.value == "N/A":
             if ('Part_Number' not in s.property):
                 print(f"Component {s.Reference.value} is missing a Part Number.")
