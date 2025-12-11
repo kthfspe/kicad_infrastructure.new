@@ -130,7 +130,7 @@ jobs:
           cd kicad
           for file in $(find . -name "*.kicad_sch"); do
             echo "Checking schematic file: $file"
-            python3 ../kicad_infrastructure/scripts/check_standard_parts.py -s "$file" -c s -x ../standard_parts.xlsx
+            python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c s -x ../standard_parts.xlsx
           done
       - name: Standard parts check completed
         run: echo "Standard parts checks completed."
