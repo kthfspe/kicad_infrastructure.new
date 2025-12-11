@@ -6,7 +6,7 @@ import re
 
 power_flags_pattern = re.compile(r'#(?:PWR|FLG)\d+')
 value_pattern = re.compile(r'[\d\.]+(?:p|n|u|m|k|Meg)?(?:\s*)$')
-pn_references_excluded = re.compile(r'(?:R\d+|C\d+|L\d+|JP\d+|SW\d+|H\d+)[a-z]?')
+pn_references_excluded = re.compile(r'(?:R\d+|C\d+|L\d+|JP\d+|SW\d+|H\d+|TP\d+)[a-z]?')
 
 def check_values(sch: Schematic):
     error_count = 0
@@ -25,6 +25,24 @@ def check_values(sch: Schematic):
             print(f"Component {r} has invalid value: '{v}'")
             error_count += 1
     return error_count
+
+def check_todo(sch: Schematic):
+    error_count = 0
+    for s in sch.symbol:
+        v = s.property.Value.value
+        r = s.property.Reference.value
+        p = s.property.Part_Number.value
+        if v == "TODO":
+            print(f"Component {r} has value TODO.")
+            error_count += 1
+        if p == "TODO":
+            print(f"Component {r} has Part Number TODO.")
+            error_count += 1
+        if v == "TODO":
+            print(f"Component {r} has value TODO.")
+            error_count += 1
+    return error_count
+    
 
 def check_part_number(sch: Schematic):
     error_count = 0
@@ -69,6 +87,8 @@ def main() -> int:
         error_count = check_values(sch)
     elif args.check_type == 'p':
         error_count = check_part_number(sch)
+    elif args.check_type == 't':
+        error_count = check_todo(sch)
     if error_count > 0:
         print(f"Found {error_count} errors in schematic.")
         return 1
