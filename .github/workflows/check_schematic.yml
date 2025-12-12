@@ -135,3 +135,35 @@ jobs:
       - name: Standard parts check completed
         run: echo "Standard parts checks completed."
 
+  check_kicad_version:
+    name: Check KiCad version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Checkout kicad infrastructure repository
+        uses: actions/checkout@v6
+        with:
+          repository: kthfspe/kicad_infrastructure.new
+          path: kicad_infrastructure
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          ./venv/bin/activate
+          pip install -r kicad_infrastructure/scripts/requirements.txt
+      - name: Run KiCad version checks for each schematic file
+        run: |
+          cd kicad
+          for file in $(find . -name "*.kicad_sch"); do
+            echo "Checking schematic file: $file"
+            python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c k
+          done
+      - name: KiCad version check completed
+        run: echo "KiCad version checks completed."
+

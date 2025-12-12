@@ -9,7 +9,7 @@ import pandas as pd
 power_flags_pattern = re.compile(r'#(?:PWR|FLG)\d+')
 value_pattern = re.compile(r'[\d\.]+(?:p|n|u|m|k|Meg)?(?:\s*)$')
 pn_references_excluded = re.compile(r'(?:R\d+|C\d+|L\d+|JP\d+|SW\d+|H\d+|TP\d+|#PWR\d+|#FLG\d+)[a-z]?')
-
+revision_pattern = re.compile(r'^\d+\.\d+$')
 def check_values(sch: Schematic):
     error_count = 0
     for s in sch.symbol:
@@ -96,6 +96,24 @@ def check_standard_parts(sch: Schematic, excel_path: str):
             error_count += 1
     return error_count
 
+def check_kicad_version(sch: Schematic):
+    if not (sch.generator.value == 'eeschema'):
+        print(f"Wrong editor {sch.generator.value}")
+        return 1
+    kicad_version = float(sch.generator_version.value)
+    if not (kicad_version >= 9 and kicad_version < 10):
+        print(f"Wrong editor version {kicad_version}")
+        return 1
+    return 0
+
+def check_revision(sch: Schematic):
+    if re.match(revision_pattern, sch.title_block.rev.value):
+        print(f"{sch.title_block.rev.value}")
+        return 0
+    else:
+        print(f"Revision {sch.title_block.rev.value} doesn't have the correct format")
+        return 1
+
 def main() -> int:
     error_count = 0
     parser = argparse.ArgumentParser(
@@ -129,11 +147,15 @@ def main() -> int:
         error_count = check_part_number(sch)
     elif args.check_type == 't':
         error_count = check_todo(sch)
+    elif args.check_type == 'k':
+        error_count = check_kicad_version(sch)
+    elif args.check_type == 'r':
+        error_count = check_revision(sch)
     elif args.check_type == 's':
         if not args.standard_parts_excel:
             print("Please provide a path to the standard parts excel file with -x")
             return 1
-        error_count += check_standard_parts(sch, args.standard_parts_excel)
+        error_count = check_standard_parts(sch, args.standard_parts_excel)
     if error_count > 0:
         print(f"Found {error_count} errors in schematic.")
         return 1
