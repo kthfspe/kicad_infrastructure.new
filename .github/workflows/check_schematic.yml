@@ -166,4 +166,75 @@ jobs:
           done
       - name: KiCad version check completed
         run: echo "KiCad version checks completed."
+  
+  check_schematic_revisions:
+    name: Check schematic revisions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Checkout kicad infrastructure repository
+        uses: actions/checkout@v6
+        with:
+          repository: kthfspe/kicad_infrastructure.new
+          path: kicad_infrastructure
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          ./venv/bin/activate
+          pip install -r kicad_infrastructure/scripts/requirements.txt
+      - name: Run schematic revision checks for each schematic file
+        run: |
+          cd kicad
+          rev="first_run"
+          for file in $(find . -name "*.kicad_sch"); do
+            echo "Checking schematic file: $file"
+            this_rev=$(python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c r)
+            if [ "$rev" = "first_run" ]; then
+              rev=$this_rev
+            elif [ "$rev" != "$this_rev" ]; then
+              echo "Error: Schematic revisions do not match. Found '$rev' and '$this_rev'."
+              exit 1
+            else
+              rev=$this_rev
+            fi
+          done
+      - name: Check against latest git tag
+        # Verify that the schematic revision is higher than the latest git tag
+        run: |
+          latest_tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "Latest git tag: $latest_tag"
+          if [ -z "$latest_tag" ]; then
+            echo "No git tags found. Skipping revision comparison."
+            exit 0
+          fi
+          # Assuming the tag format is vX.Y.Z and schematic revision is X.Y.Z
+          tag_rev=${latest_tag#v}
+          echo "Comparing schematic revision '$rev' with latest tag revision '$tag_rev'"
+          IFS='.' read -r -a rev_parts <<< "$rev"
+          IFS='.' read -r -a tag_parts <<< "$tag_rev"
+          for i in 0 1 2; do
+            if [ "${rev_parts[i]}" -gt "${tag_parts[i]}" ]; then
+              echo "Schematic revision '$rev' is higher than latest tag '$latest_tag'."
+              exit 0
+            elif [ "${rev_parts[i]}" -lt "${tag_parts[i]}" ]; then
+              echo "Error: Schematic revision '$rev' is not higher than latest tag '$latest_tag'."
+              exit 1
+            fi
+          done
+          echo "Schematic revision '$rev' is equal to latest tag '$latest_tag'. It must be higher."
+          exit 1
+      - name: Schematic revision check completed
+        run: echo "Schematic revision checks completed."
+
+
+
+
+
 
