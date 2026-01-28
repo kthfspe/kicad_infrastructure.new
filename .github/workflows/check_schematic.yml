@@ -128,10 +128,20 @@ jobs:
       - name: Run standard parts checks for each schematic file
         run: |
           cd kicad
+          failures=()
           for file in $(find . -name "*.kicad_sch"); do
             echo "Checking schematic file: $file"
-            python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c s -x ../standard_parts.xlsx
+            if ! python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c s -x ../standard_parts.xlsx; then
+              failures+=("$file")
+            fi
           done
+          if [ ${#failures[@]} -ne 0 ]; then
+            echo "Standard parts check failed for the following schematics:"
+            for f in "${failures[@]}"; do
+              echo "  - $f"
+            done
+            exit 1
+          fi
       - name: Standard parts check completed
         run: echo "Standard parts checks completed."
 
