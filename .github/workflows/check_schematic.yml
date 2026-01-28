@@ -207,6 +207,8 @@ jobs:
               rev=$this_rev
             fi
           done
+          echo "rev=$rev" >> "$GITHUB_ENV"
+          echo "Schematic revision (rev) set to: $rev"
       - name: Check against latest git tag
         # Verify that the schematic revision is higher than the latest git tag
         run: |
