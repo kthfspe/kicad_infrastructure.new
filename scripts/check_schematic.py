@@ -34,16 +34,15 @@ def check_todo(sch: Schematic):
     for s in sch.symbol:
         v = s.property.Value.value
         r = s.property.Reference.value
-        p = s.property.Part_Number.value
         if v == "TODO":
             print(f"Component {r} has value TODO.")
             error_count += 1
-        if p == "TODO":
-            print(f"Component {r} has Part Number TODO.")
-            error_count += 1
-        if v == "TODO":
-            print(f"Component {r} has value TODO.")
-            error_count += 1
+
+        if 'Part_Number' in s.property:
+            p = s.property.Part_Number.value
+            if p == "TODO":
+                print(f"Component {r} has Part Number TODO.")
+                error_count += 1
     return error_count
 
 def check_part_number(sch: Schematic):
