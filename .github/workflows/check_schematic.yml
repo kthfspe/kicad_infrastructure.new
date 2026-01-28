@@ -173,7 +173,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - name: Set up python
         uses: actions/setup-python@v4
         with:
