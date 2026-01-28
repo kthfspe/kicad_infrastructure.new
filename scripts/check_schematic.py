@@ -79,7 +79,7 @@ def check_standard_parts(sch: Schematic, excel_path: str):
                 # print(f"Could not find part number column in sheet {sheet_name}")
                 continue
             part_number = row[pn_col]
-            standard_parts.append(part_number)
+            standard_parts.append(str(part_number))
     print(f"Loaded {len(standard_parts)} standard parts from excel file.")
     # pprint(standard_parts)
     for s in sch.symbol:
@@ -163,4 +163,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
