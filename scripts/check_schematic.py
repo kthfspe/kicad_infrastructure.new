@@ -159,6 +159,8 @@ def check_revision(sch: Schematic, schematic_path=None):
         print("Revision value not found in schematic.")
         return 1
     rev_str = str(rev_value).strip()
+    if rev_str.lower().startswith("v"):
+        rev_str = rev_str[1:].strip()
     if re.match(revision_pattern, rev_str):
         print(f"{rev_str}")
         return 0
