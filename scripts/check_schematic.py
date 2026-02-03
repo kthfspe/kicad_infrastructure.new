@@ -7,12 +7,33 @@ import pandas as pd
 
 
 power_flags_pattern = re.compile(r'#(?:PWR|FLG)\d+')
-value_pattern = re.compile(r'[\d\.]+(?:p|n|u|m|k|Meg)?(?:\s*)$')
+value_pattern = re.compile(r'[\d\.]+(?:p|n|u|m|k|M|G)?(?:\s*)$')
 pn_references_excluded = re.compile(r'(?:R\d+|C\d+|L\d+|JP\d+|SW\d+|H\d+|TP\d+|#PWR\d+|#FLG\d+)[a-z]?')
 standard_parts_references_excluded = re.compile(r'(?:R\d+|C\d+|L\d+|JP\d+|J\d+|SW\d+|H\d+|TP\d+|#PWR\d+|#FLG\d+)[a-z]?')
 revision_pattern = re.compile(r'^\d+\.\d+$')
 diode_reference_pattern = re.compile(r'^D\d+[a-z]?$')
 diode_value_pattern = re.compile(r'^(?:RED|GREEN|BLUE|WHITE|YELLOW|ORANGE|AMBER|IR|UV)$')
+def _is_dnp(symbol) -> bool:
+    dnp_attr = getattr(symbol, "dnp", None)
+    if dnp_attr is not None:
+        try:
+            dnp_val = dnp_attr.value
+        except Exception:
+            dnp_val = dnp_attr
+        if isinstance(dnp_val, str):
+            return dnp_val.strip().lower() in ("yes", "true", "1", "dnp")
+        if isinstance(dnp_val, bool):
+            return dnp_val
+    try:
+        if 'DNP' in symbol.property:
+            v = symbol.property.DNP.value
+            if isinstance(v, str):
+                return v.strip().lower() in ("yes", "true", "1", "dnp")
+            if isinstance(v, bool):
+                return v
+    except Exception:
+        pass
+    return False
 def check_values(sch: Schematic):
     error_count = 0
     for s in sch.symbol:
@@ -89,6 +110,8 @@ def check_standard_parts(sch: Schematic, excel_path: str):
     for s in sch.symbol:
         if re.match(standard_parts_references_excluded, s.Reference.value):
             continue
+        if _is_dnp(s):
+            continue
         if 'Part_Number' not in s.property:
             print(f"Component {s.Reference.value} is missing a Part Number.")
             error_count += 1
@@ -111,13 +134,36 @@ def check_kicad_version(sch: Schematic):
         return 1
     return 0
 
-def check_revision(sch: Schematic):
-    if re.match(revision_pattern, sch.title_block.rev.value):
-        print(f"{sch.title_block.rev.value}")
-        return 0
-    else:
-        print(f"Revision {sch.title_block.rev.value} doesn't have the correct format")
+def _extract_revision_from_file(schematic_path: str):
+    try:
+        with open(schematic_path, "r", encoding="utf-8") as f:
+            contents = f.read()
+    except OSError:
+        return None
+    match = re.search(r'\(rev\s+"([^"]*)"\)', contents)
+    if not match:
+        return None
+    return match.group(1)
+
+def check_revision(sch: Schematic, schematic_path=None):
+    rev_value = None
+    try:
+        rev_value = sch.title_block.rev.value
+    except Exception:
+        rev_value = None
+    # Debug: show raw value from kicad-skip for CI logs.
+    print(f"Raw revision value from kicad-skip: {repr(rev_value)}")
+    if rev_value is None and schematic_path:
+        rev_value = _extract_revision_from_file(schematic_path)
+    if rev_value is None:
+        print("Revision value not found in schematic.")
         return 1
+    rev_str = str(rev_value).strip()
+    if re.match(revision_pattern, rev_str):
+        print(f"{rev_str}")
+        return 0
+    print(f"Revision {rev_str} doesn't have the correct format")
+    return 1
 
 def main() -> int:
     error_count = 0
@@ -155,7 +201,7 @@ def main() -> int:
     elif args.check_type == 'k':
         error_count = check_kicad_version(sch)
     elif args.check_type == 'r':
-        error_count = check_revision(sch)
+        error_count = check_revision(sch, args.schematic)
     elif args.check_type == 's':
         if not args.standard_parts_excel:
             print("Please provide a path to the standard parts excel file with -x")
