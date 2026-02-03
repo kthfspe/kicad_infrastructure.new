@@ -151,11 +151,11 @@ def check_revision(sch: Schematic, schematic_path=None):
         rev_value = sch.title_block.rev.value
     except Exception:
         rev_value = None
-    # Debug: show raw value from kicad-skip for CI logs.
-    print(f"Raw revision value from kicad-skip: {repr(rev_value)}")
-    if rev_value is None and schematic_path:
+    # Debug to stderr so stdout stays clean for CI parsing.
+    print(f"Raw revision value from kicad-skip: {repr(rev_value)}", file=sys.stderr)
+    if (rev_value is None or str(rev_value).strip() == "") and schematic_path:
         rev_value = _extract_revision_from_file(schematic_path)
-    if rev_value is None:
+    if rev_value is None or str(rev_value).strip() == "":
         print("Revision value not found in schematic.")
         return 1
     rev_str = str(rev_value).strip()
