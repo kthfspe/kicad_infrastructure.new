@@ -11,6 +11,8 @@ value_pattern = re.compile(r'[\d\.]+(?:p|n|u|m|k|Meg)?(?:\s*)$')
 pn_references_excluded = re.compile(r'(?:R\d+|C\d+|L\d+|JP\d+|SW\d+|H\d+|TP\d+|#PWR\d+|#FLG\d+)[a-z]?')
 standard_parts_references_excluded = re.compile(r'(?:R\d+|C\d+|L\d+|JP\d+|J\d+|SW\d+|H\d+|TP\d+|#PWR\d+|#FLG\d+)[a-z]?')
 revision_pattern = re.compile(r'^\d+\.\d+$')
+diode_reference_pattern = re.compile(r'^D\d+[a-z]?$')
+diode_value_pattern = re.compile(r'^(?:RED|GREEN|BLUE|WHITE|YELLOW|ORANGE|AMBER|IR|UV)$')
 def check_values(sch: Schematic):
     error_count = 0
     for s in sch.symbol:
@@ -21,6 +23,9 @@ def check_values(sch: Schematic):
         if v == "N/A": # check for part number mandatory later
             continue
         if re.match(power_flags_pattern, r):
+            continue
+
+        if diode_reference_pattern.match(r) and diode_value_pattern.match(v):
             continue
 
         if not value_pattern.match(v):
