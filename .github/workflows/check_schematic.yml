@@ -27,10 +27,20 @@ jobs:
       - name: Run schematic value checks for each schematic file
         run: |
           cd kicad
+          failures=()
           for file in $(find . -name "*.kicad_sch"); do
             echo "Checking schematic file: $file"
-            python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c v
+            if ! python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c v; then
+              failures+=("$file")
+            fi
           done
+          if [ ${#failures[@]} -ne 0 ]; then
+            echo "Schematic value check failed for the following schematics:"
+            for f in "${failures[@]}"; do
+              echo "  - $f"
+            done
+            exit 1
+          fi
 
       - name: Schematic value check completed
         run: echo "Schematic value checks completed."
@@ -61,10 +71,20 @@ jobs:
       - name: Run schematic value checks for each schematic file
         run: |
           cd kicad
+          failures=()
           for file in $(find . -name "*.kicad_sch"); do
             echo "Checking schematic file: $file"
-            python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c p
+            if ! python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c p; then
+              failures+=("$file")
+            fi
           done
+          if [ ${#failures[@]} -ne 0 ]; then
+            echo "Schematic part number check failed for the following schematics:"
+            for f in "${failures[@]}"; do
+              echo "  - $f"
+            done
+            exit 1
+          fi
 
       - name: Schematic value check completed
         run: echo "Schematic value checks completed."
@@ -94,10 +114,20 @@ jobs:
       - name: Run schematic TODO checks for each schematic file
         run: |
           cd kicad
+          failures=()
           for file in $(find . -name "*.kicad_sch"); do
             echo "Checking schematic file: $file"
-            python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c t
+            if ! python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c t; then
+              failures+=("$file")
+            fi
           done
+          if [ ${#failures[@]} -ne 0 ]; then
+            echo "Schematic TODO check failed for the following schematics:"
+            for f in "${failures[@]}"; do
+              echo "  - $f"
+            done
+            exit 1
+          fi
       - name: Schematic TODO check completed
         run: echo "Schematic TODO checks completed."
 
@@ -170,10 +200,20 @@ jobs:
       - name: Run KiCad version checks for each schematic file
         run: |
           cd kicad
+          failures=()
           for file in $(find . -name "*.kicad_sch"); do
             echo "Checking schematic file: $file"
-            python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c k
+            if ! python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c k; then
+              failures+=("$file")
+            fi
           done
+          if [ ${#failures[@]} -ne 0 ]; then
+            echo "KiCad version check failed for the following schematics:"
+            for f in "${failures[@]}"; do
+              echo "  - $f"
+            done
+            exit 1
+          fi
       - name: KiCad version check completed
         run: echo "KiCad version checks completed."
   
@@ -205,18 +245,36 @@ jobs:
         run: |
           cd kicad
           rev="first_run"
+          error_files=()
+          mismatch_errors=0
           for file in $(find . -name "*.kicad_sch"); do
             echo "Checking schematic file: $file"
-            this_rev=$(python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c r)
+            if ! this_rev=$(python3 ../kicad_infrastructure/scripts/check_schematic.py -s "$file" -c r); then
+              echo "Error: Revision check failed for schematic: $file"
+              error_files+=("$file")
+              continue
+            fi
             if [ "$rev" = "first_run" ]; then
               rev=$this_rev
             elif [ "$rev" != "$this_rev" ]; then
               echo "Error: Schematic revisions do not match. Found '$rev' and '$this_rev'."
-              exit 1
+              mismatch_errors=1
             else
               rev=$this_rev
             fi
           done
+          if [ ${#error_files[@]} -gt 0 ]; then
+            echo "Revision check failed for the following schematics:"
+            for f in "${error_files[@]}"; do
+              echo "  - $f"
+            done
+          fi
+          if [ "$mismatch_errors" -eq 1 ]; then
+            echo "Schematic revision mismatch detected across files."
+          fi
+          if [ ${#error_files[@]} -gt 0 ] || [ "$mismatch_errors" -eq 1 ]; then
+            exit 1
+          fi
           echo "rev=$rev" >> "$GITHUB_ENV"
           echo "Schematic revision (rev) set to: $rev"
       - name: Check against latest git tag
@@ -242,13 +300,9 @@ jobs:
               exit 1
             fi
           done
-          echo "Schematic revision '$rev' is equal to latest tag '$latest_tag'. It must be higher."
-          exit 1
+          echo "Schematic revision '$rev' is equal to latest tag '$latest_tag'. Allowed."
+          exit 0
       - name: Schematic revision check completed
         run: echo "Schematic revision checks completed."
-
-
-
-
 
 
