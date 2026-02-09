@@ -8,6 +8,7 @@ import pandas as pd
 
 power_flags_pattern = re.compile(r'#(?:PWR|FLG)\d+')
 value_pattern = re.compile(r'[\d\.]+(?:p|n|u|m|k|M|G)?(?:\s*)$')
+value_references_excluded = re.compile(r'(?:H\d+|TP\d+)[a-z]?')
 pn_references_excluded = re.compile(r'(?:R\d+|C\d+|L\d+|JP\d+|SW\d+|H\d+|TP\d+|#PWR\d+|#FLG\d+)[a-z]?')
 standard_parts_references_excluded = re.compile(r'(?:R\d+|C\d+|L\d+|JP\d+|J\d+|SW\d+|H\d+|TP\d+|#PWR\d+|#FLG\d+)[a-z]?')
 revision_pattern = re.compile(r'^\d+\.\d+$')
@@ -44,6 +45,8 @@ def check_values(sch: Schematic):
         if v == "N/A": # check for part number mandatory later
             continue
         if re.match(power_flags_pattern, r):
+            continue
+        if re.match(value_references_excluded, r):
             continue
 
         if diode_reference_pattern.match(r) and diode_value_pattern.match(v):
